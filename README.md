@@ -12,6 +12,7 @@ Code for online retail project.
 * retail_norm.csv: Formatted dataset
 * convert MD to Slideshow.R: converts R markdown into markdown and then markdown into html slides
 * online_retail_presentation.html: html slide deck. Decided to go with ppt because didn't have time to format
+* Online Retail.zip: contains Online Retail.csv. This file needs to be unziped if files are downloaded and you try to run .rmd file
 
 ## Warning
 
