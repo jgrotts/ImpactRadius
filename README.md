@@ -10,3 +10,7 @@ Code for online retail project.
 * File to connect shiny app to server.R: Connect shiny app. App files in shiny app folder
 * format_retail_norm.R: Format dataset for model fitting
 * retail_norm.csv: Formatted dataset
+
+## Warning
+
+Could not upload original dataset because the file was too large. Dataset needs to be put in file locally as CSV. 
