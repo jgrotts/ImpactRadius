@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" type="text/css" media="screen, projection, print"
+    href="http://www.w3.org/Talks/Tools/Slidy2/styles/slidy.css" />
+  <script src="http://www.w3.org/Talks/Tools/Slidy2/scripts/slidy.js"
+    charset="utf-8" type="text/javascript"></script>
+</head>
+<body>
+<div id="predicting-whether-demand-for-a-product-is-favorable-to-price-increases" class="slide section level1">
+<h1>Predicting Whether Demand for a Product is Favorable to Price Increases</h1>
+<h3 id="prepared-by-jonathan-grotts">Prepared by: Jonathan Grotts</h3>
+<h3 id="dataset-online-retail.xlsx">Dataset: Online Retail.xlsx</h3>
+<h3 id="date-12222016">Date: 12/22/2016</h3>
+</div>
+<div id="contents" class="slide section level1">
+<h1>Contents</h1>
+<ul>
+<li>Purpose</li>
+<li>Demand curve refresher</li>
+<li>Data cleaning</li>
+<li>Summary statistics</li>
+<li>Clustering</li>
+<li>Prediction</li>
+<li>Conclusions</li>
+</ul>
+</div>
+<div id="original-prompt" class="slide section level1">
+<h1>Original prompt</h1>
+<p>The goal is to estimate the impact of price on customer purchase by country and product purchase.</p>
+</div>
+<div id="purpose" class="slide section level1">
+<h1>Purpose</h1>
+<p>Based on sales data, determine if we can predict whether the demand for a product will be unaffected or favorable after a price increase. Items will be classified into &quot;price change favorable&quot; and &quot;price change unfavorable&quot; and then we will see if country and/or product description can predict this grouping.</p>
+</div>
+<div id="demand-curve" class="slide section level1">
+<h1>Demand curve</h1>
+<div class="figure">
+<img src="http://img.sparknotes.com/figures/5/5259b727009a2736d6ad639bab3494ff/e.gif" alt="." />
+<p class="caption">.</p>
+</div>
+<ul>
+<li>Elasticity = (% Change in Quantity)/(% Change in Price)</li>
+<li>Price elasticity of demand is responsiveness of the quantity demanded of a good to a change in its price.</li>
+</ul>
+</div>
+<div class="slide section level1">
+
+</div>
+<div id="data-cleaning" class="slide section level1">
+<h1>Data cleaning</h1>
+<p>Datasource: This is a transnational data set which contains all transactions for a UK-based online retailer. The company mainly sells unique all-occasion gifts. Many customers of the company are wholesalers.</p>
+<p>Dataset contained:</p>
+<ul>
+<li>Unique invoice number</li>
+<li>Unique item number</li>
+<li>Description of product</li>
+<li>Quantity of product sold</li>
+<li>Invoice date</li>
+<li>Price</li>
+<li>Country of sale</li>
+</ul>
+</div>
+<div id="data-cleaning-1" class="slide section level1">
+<h1>Data cleaning</h1>
+<ul>
+<li>2 orders were removed because of negative price.</li>
+<li>446 orders were removed because of 'Unspecified' country.</li>
+<li>9288 orders were removed because of negative quantities. 2 were removed because quantity was extreme outlier. These values had a quantity of approximately 81,000 and the next closest order was 4,800.</li>
+<li>Large price outliers were investigated and left in the dataset because there was no clear indication that these were data entry errors. Also, considered removing items with descriptions like &quot;AMAZON FEE&quot;, &quot;Adjust bad debt&quot;, &quot;Postage&quot;, and &quot;Manual&quot;, but these items were left in for the analysis.</li>
+<li>Products with only one price were removed from the analysis because a demand curve could not be drawn (n = 1084).</li>
+</ul>
+</div>
+<div id="summary-statistics" class="slide section level1">
+<h1>Summary Statistics</h1>
+<ul>
+<li>There were 37 countries in the dataset.</li>
+<li>There were 4,333 customers in the dataset. There were 132,018 orders missing a customer ID.</li>
+<li>There were 3,921 unique items in the dataset.</li>
+<li>There were 19,945 unique orders in the dataset.</li>
+<li>The date range for the orders was 12/01/2010 - 10/12/2011. There were 302,155 items missing an order date.</li>
+</ul>
+</div>
+<div id="summary-statistics-1" class="slide section level1">
+<h1>Summary Statistics</h1>
+<ul>
+<li><a href="https://datadigressions.shinyapps.io/Retail_Summary_Statistics/">Shiny app</a></li>
+</ul>
+</div>
+<div id="feature-extraction" class="slide section level1">
+<h1>Feature Extraction</h1>
+<ul>
+<li>Price range (normalized)</li>
+<li>Quantity range (normalized)</li>
+<li>Demand curve slope (normalized)</li>
+<li>Proxy for seasonality of item sold: interquartile range of the scaled number of quantities by month</li>
+<li>Median price, mean price, median quantity, mean quantity</li>
+<li>Country the item sold in</li>
+<li>Keyword from description of item</li>
+</ul>
+</div>
+<div id="word-cloud-of-keywords-in-item-description" class="slide section level1">
+<h1>Word cloud of keywords in item description</h1>
+<div class="figure">
+<img src="figure/wordcloud-1.png" alt="plot of chunk wordcloud" />
+<p class="caption">plot of chunk wordcloud</p>
+</div>
+</div>
+<div id="labelling-products-favorable-to-price-change" class="slide section level1">
+<h1>Labelling products favorable to price change</h1>
+<p>Steps:</p>
+<ul>
+<li>Explore the data</li>
+<li>Compare clustering algorithms</li>
+<li>Apply clustering algorithms</li>
+</ul>
+</div>
+<div id="labelling-example-1" class="slide section level1">
+<h1>Labelling example 1</h1>
+<ul>
+<li>Obvious example of wanting to label this product as &quot;price change favorable&quot;</li>
+</ul>
+<div class="figure">
+<img src="figure/unnamed-chunk-2-1.png" alt="plot of chunk unnamed-chunk-2" />
+<p class="caption">plot of chunk unnamed-chunk-2</p>
+</div>
+</div>
+<div id="labelling-example-2" class="slide section level1">
+<h1>Labelling example 2</h1>
+<ul>
+<li>Obvious example of price change unfavorable</li>
+</ul>
+<div class="figure">
+<img src="figure/unnamed-chunk-3-1.png" alt="plot of chunk unnamed-chunk-3" />
+<p class="caption">plot of chunk unnamed-chunk-3</p>
+</div>
+</div>
+<div id="labelling-example-3" class="slide section level1">
+<h1>Labelling example 3</h1>
+<ul>
+<li>Unobvious scenario</li>
+</ul>
+<div class="figure">
+<img src="figure/unnamed-chunk-4-1.png" alt="plot of chunk unnamed-chunk-4" />
+<p class="caption">plot of chunk unnamed-chunk-4</p>
+</div>
+</div>
+<div id="labelling-example-4" class="slide section level1">
+<h1>Labelling example 4</h1>
+<ul>
+<li>Unobvious scenario</li>
+</ul>
+<div class="figure">
+<img src="figure/unnamed-chunk-5-1.png" alt="plot of chunk unnamed-chunk-5" />
+<p class="caption">plot of chunk unnamed-chunk-5</p>
+</div>
+</div>
+<div id="which-clustering-algorithm-to-choose" class="slide section level1">
+<h1>Which clustering algorithm to choose?!</h1>
+<div class="figure">
+<img src="clustering_alg_image.png" alt="alt text" />
+<p class="caption">alt text</p>
+</div>
+</div>
+<div class="slide section level1">
+
+<h2 id="distribution-of-demand-curve-slope-and-the-ratio-of-quantity-to-price">Distribution of demand curve slope and the ratio of quantity to price</h2>
+<div class="figure">
+<img src="figure/unnamed-chunk-6-1.png" alt="plot of chunk unnamed-chunk-6" />
+<p class="caption">plot of chunk unnamed-chunk-6</p>
+</div>
+</div>
+<div id="kmean-clustering" class="slide section level1">
+<h1>Kmean clustering</h1>
+<div class="figure">
+<img src="figure/unnamed-chunk-7-1.png" alt="plot of chunk unnamed-chunk-7" />
+<p class="caption">plot of chunk unnamed-chunk-7</p>
+</div>
+</div>
+<div id="hierarchical-clustering" class="slide section level1">
+<h1>Hierarchical clustering</h1>
+<div class="figure">
+<img src="figure/unnamed-chunk-8-1.png" alt="plot of chunk unnamed-chunk-8" />
+<p class="caption">plot of chunk unnamed-chunk-8</p>
+</div>
+</div>
+<div id="hierarchical-clustering-partitions" class="slide section level1">
+<h1>Hierarchical clustering (partitions)</h1>
+<div class="figure">
+<img src="figure/unnamed-chunk-9-1.png" alt="plot of chunk unnamed-chunk-9" />
+<p class="caption">plot of chunk unnamed-chunk-9</p>
+</div>
+</div>
+<div id="hierarchical-clustering-groups" class="slide section level1">
+<h1>Hierarchical clustering groups</h1>
+<div class="figure">
+<img src="figure/unnamed-chunk-10-1.png" alt="plot of chunk unnamed-chunk-10" />
+<p class="caption">plot of chunk unnamed-chunk-10</p>
+</div>
+</div>
+<div class="slide section level1">
+
+<h2 id="comparison-of-price-change-unfavorable-to-price-change-favorable">Comparison of &quot;price change unfavorable&quot; to &quot;price change favorable&quot;</h2>
+<ul>
+<li>Data presented as mean (SD) or number of group (row percent)</li>
+</ul>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Variable</th>
+<th align="left">Price change unfavorable (n = 2209)</th>
+<th align="left">Price change favorable (n = 628)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Mean price</td>
+<td align="left">4.4 (11.8)</td>
+<td align="left">5.8 (17.8)</td>
+</tr>
+<tr class="even">
+<td align="left">Median price</td>
+<td align="left">3.9 (5.9)</td>
+<td align="left">4.5 (10.7)</td>
+</tr>
+<tr class="odd">
+<td align="left">Mean quantity</td>
+<td align="left">387.6 (640.1)</td>
+<td align="left">304.9 (473.1)</td>
+</tr>
+<tr class="even">
+<td align="left">Median quantity</td>
+<td align="left">202.4 (371.2)</td>
+<td align="left">94.1 (166.8)</td>
+</tr>
+<tr class="odd">
+<td align="left">Price range (normalized)</td>
+<td align="left">2.1 (0.3)</td>
+<td align="left">2.3 (0.6)</td>
+</tr>
+<tr class="even">
+<td align="left">Quantity range (normalized)</td>
+<td align="left">2.1 (0.3)</td>
+<td align="left">2.4 (0.7)</td>
+</tr>
+<tr class="odd">
+<td align="left">Demand curve slope (normalized)</td>
+<td align="left">-0.7 (0.2)</td>
+<td align="left">-0.3 (0.4)</td>
+</tr>
+<tr class="even">
+<td align="left">Seasonality proxy</td>
+<td align="left">1 (0.5)</td>
+<td align="left">1 (0.4)</td>
+</tr>
+<tr class="odd">
+<td align="left">Number of unique customers</td>
+<td align="left">88.4 (91.9)</td>
+<td align="left">99.7 (111.4)</td>
+</tr>
+<tr class="even">
+<td align="left">Number of unique orders</td>
+<td align="left">169.3 (199.7)</td>
+<td align="left">201.9 (243.7)</td>
+</tr>
+<tr class="odd">
+<td align="left">Brazil</td>
+<td align="left">21 (65.6%)</td>
+<td align="left">11 (34.4%)</td>
+</tr>
+<tr class="even">
+<td align="left">European Community</td>
+<td align="left">30 (61.2%)</td>
+<td align="left">19 (38.8%)</td>
+</tr>
+<tr class="odd">
+<td align="left">Poland</td>
+<td align="left">134 (68.4%)</td>
+<td align="left">62 (31.6%)</td>
+</tr>
+<tr class="even">
+<td align="left">United Arab Emirates</td>
+<td align="left">47 (72.3%)</td>
+<td align="left">18 (27.7%)</td>
+</tr>
+<tr class="odd">
+<td align="left">United Kingdom</td>
+<td align="left">2209 (77.9%)</td>
+<td align="left">628 (22.1%)</td>
+</tr>
+<tr class="even">
+<td align="left">design</td>
+<td align="left">75 (72.1%)</td>
+<td align="left">29 (27.9%)</td>
+</tr>
+<tr class="odd">
+<td align="left">christma</td>
+<td align="left">92 (78.6%)</td>
+<td align="left">25 (21.4%)</td>
+</tr>
+<tr class="even">
+<td align="left">retrospot</td>
+<td align="left">80 (87%)</td>
+<td align="left">12 (13%)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="models-to-predict-favorable-price-change" class="slide section level1">
+<h1>Models to predict favorable price change</h1>
+<ul>
+<li>Logistic regression</li>
+<li>Support vector machine (SVM)</li>
+<li>Linear discriminant analysis</li>
+<li>Classification and regression tree (CART)</li>
+<li>Random forest</li>
+<li>Generalized boosted model</li>
+</ul>
+</div>
+<div id="summary-of-model-fitting-strategy" class="slide section level1">
+<h1>Summary of model fitting strategy</h1>
+<ul>
+<li>Fit models</li>
+<li>Train models using repeated cross validation (10 folds, 3 repeats)</li>
+<li>Models trained based on accuracy</li>
+<li>Compare accuracy and the kappa statistics between models</li>
+<li>Summarize results of best performing model</li>
+</ul>
+</div>
+<div id="performance-of-various-models" class="slide section level1">
+<h1>Performance of various models</h1>
+<div class="figure">
+<img src="figure/unnamed-chunk-12-1.png" alt="plot of chunk unnamed-chunk-12" />
+<p class="caption">plot of chunk unnamed-chunk-12</p>
+</div>
+</div>
+<div id="random-forest-results" class="slide section level1">
+<h1>Random forest results</h1>
+<div class="figure">
+<img src="figure/unnamed-chunk-13-1.png" alt="plot of chunk unnamed-chunk-13" />
+<p class="caption">plot of chunk unnamed-chunk-13</p>
+</div>
+</div>
+<div class="slide section level1">
+
+<div class="figure">
+<img src="figure/unnamed-chunk-14-1.png" alt="plot of chunk unnamed-chunk-14" />
+<p class="caption">plot of chunk unnamed-chunk-14</p>
+</div>
+</div>
+<div class="slide section level1">
+
+<table>
+<thead>
+<tr class="header">
+<th align="left">Variable</th>
+<th align="left">OR</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">quantity_med</td>
+<td align="left">0.996 (0.995 - 0.997)</td>
+</tr>
+<tr class="even">
+<td align="left">num_orders</td>
+<td align="left">1.003 (1.002 - 1.005)</td>
+</tr>
+<tr class="odd">
+<td align="left">Japan</td>
+<td align="left">0.558 (0.356 - 0.877)</td>
+</tr>
+<tr class="even">
+<td align="left">Hong_Kong</td>
+<td align="left">0.549 (0.333 - 0.906)</td>
+</tr>
+<tr class="odd">
+<td align="left">Poland</td>
+<td align="left">1.554 (1.073 - 2.252)</td>
+</tr>
+<tr class="even">
+<td align="left">decor</td>
+<td align="left">0.502 (0.266 - 0.947)</td>
+</tr>
+<tr class="odd">
+<td align="left">European_Community</td>
+<td align="left">1.959 (1.009 - 3.802)</td>
+</tr>
+<tr class="even">
+<td align="left">Denmark</td>
+<td align="left">1.426 (0.972 - 2.094)</td>
+</tr>
+<tr class="odd">
+<td align="left">Canada</td>
+<td align="left">0.626 (0.371 - 1.058)</td>
+</tr>
+<tr class="even">
+<td align="left">RSA</td>
+<td align="left">0.494 (0.21 - 1.162)</td>
+</tr>
+<tr class="odd">
+<td align="left">Saudi_Arabia</td>
+<td align="left">3.26 (0.742 - 14.312)</td>
+</tr>
+<tr class="even">
+<td align="left">Bahrain</td>
+<td align="left">0.133 (0.01 - 1.686)</td>
+</tr>
+<tr class="odd">
+<td align="left">retrospot</td>
+<td align="left">0.61 (0.3 - 1.242)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="possible-further-areas-of-exploration" class="slide section level1">
+<h1>Possible further areas of exploration</h1>
+<ul>
+<li>Better metrics for seasonality</li>
+<li>Clustering on description of products</li>
+<li>Use external source to map description of products to categories</li>
+</ul>
+</div>
+</body>
+</html>
