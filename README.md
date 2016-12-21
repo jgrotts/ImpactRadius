@@ -10,6 +10,8 @@ Code for online retail project.
 * File to connect shiny app to server.R: Connect shiny app. App files in shiny app folder
 * format_retail_norm.R: Format dataset for model fitting
 * retail_norm.csv: Formatted dataset
+* convert MD to Slideshow.R: converts R markdown into markdown and then markdown into html slides
+* online_retail_presentation.html: html slide deck. Decided to go with ppt because didn't have time to format
 
 ## Warning
 
